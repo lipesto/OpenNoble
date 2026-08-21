@@ -11,6 +11,8 @@ uniform mat4 shadowProjection;
 uniform mat4 shadowProjectionInverse;
 
 //SAMPLERS
+uniform  sampler2D noisetex;
+
 uniform  sampler2D depthtex0;
 uniform  sampler2D depthtex1;
 uniform  sampler2D depthtex2;

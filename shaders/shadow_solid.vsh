@@ -14,7 +14,7 @@ in vec2 mc_midTexCoord;
 in vec4 at_midBlock;
 
 void main() {
-        return;
+
         vec3 centerPosition = gl_Vertex.xyz + cameraPositionFract + at_midBlock.xyz / 64.0;
         vec3 midColor = textureLod(gtexture, mc_midTexCoord, 4).rgb * gl_Color.rgb;
         ivec3 voxel = ivec3(floor(centerPosition)) + voxelizedVolumeSize / 2;
