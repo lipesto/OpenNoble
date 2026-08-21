@@ -1,3 +1,15 @@
+//MATRICES
+uniform mat4 gbufferModelView;
+uniform mat4 gbufferModelViewInverse;
+uniform mat4 gbufferPreviousModelView;
+uniform mat4 gbufferPreviousProjection;
+uniform mat4 gbufferProjection;
+uniform mat4 gbufferProjectionInverse;
+uniform mat4 shadowModelView;
+uniform mat4 shadowModelViewInverse;
+uniform mat4 shadowProjection;
+uniform mat4 shadowProjectionInverse;
+
 //SAMPLERS
 uniform  sampler2D depthtex0;
 uniform  sampler2D depthtex1;
@@ -7,3 +19,9 @@ uniform  sampler2D colortex0;
 uniform  sampler2D colortex1;
 uniform  sampler2D colortex2;
 uniform usampler2D colortex3;
+
+
+
+uniform vec2 resolution;
+uniform vec2 resolutionInv;
+uniform vec3 cameraPositionFract;
