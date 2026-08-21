@@ -1,26 +1,29 @@
 #version 430
 
-uniform sampler2D gtexture;
+#include "/lib/gbuffers_surface.glsl"
 
 uniform vec4 entityColor;
-uniform float alphaTestRef;
 
 in vertex {
-    vec2 atlasCoordinates;
-    vec3 lightmapColor;
+    vec2 uv;
+    vec2 lightmap;
     vec4 vertexColor;
+    flat mat3 TBN;
+    flat int ID;
 };
 
+void main() {
+    vec4 textureAlbedo = texture(gtexture, uv);
+    vec4 textureSpecular = texture(specular, uv);
+    vec4 textureNormals = texture(normals,  uv);
 
-/* DRAWBUFFERS:0 */
-out vec4 color;
+    if (textureAlbedo.a < alphaTestRef) discard;
 
-void main() {   
-    color = texture(gtexture, atlasCoordinates);
-    
-    if (color.a < alphaTestRef) discard;
-    
-    color *= vertexColor;
-    color.rgb = mix(color.rgb, entityColor.rgb, entityColor.a);
-    color.rgb *= lightmapColor;
+    vec3 albedo = textureAlbedo.rgb * vertexColor.rgb;
+    albedo = mix(albedo, entityColor.rgb, entityColor.a);
+
+    vec3 normal = getNormal(textureNormals.xy, TBN);
+    vec3 emission = getEmission(albedo, textureSpecular.a);
+
+    storeSurfaceData(albedo, normal, TBN[2], emission, textureSpecular.rgb, lightmap, 1.0);
 }

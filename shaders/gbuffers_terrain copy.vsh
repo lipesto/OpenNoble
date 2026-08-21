@@ -4,6 +4,8 @@
 
 uniform int blockEntityId;
 
+in vec2 mc_Entity;
+
 out vertex {
     vec2 uv;
     vec2 lightmap;

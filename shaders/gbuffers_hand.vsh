@@ -1,17 +1,19 @@
 #version 430 compatibility
 
-uniform sampler2D lightmap;
+#include "/lib/gbuffers_vertex.glsl"
 
 out vertex {
-    vec2 atlasCoordinates;
+    vec2 uv;
+    vec2 lightmap;
     vec4 vertexColor;
+    flat mat3 TBN;
 };
 
-void main() {
-    vec2 lightmapCoordinates = (gl_TextureMatrix[1] * gl_MultiTexCoord1).xy;
-    vec3 lightmapColor = textureLod(lightmap, lightmapCoordinates, 0).rgb;
+
+void main(){
     gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-    atlasCoordinates = (gl_TextureMatrix[0] * gl_MultiTexCoord0).xy;
+    uv = getUV();
+    lightmap = getLightmap();
     vertexColor = gl_Color;
-    vertexColor.rgb *= lightmapColor;
+    TBN = getTBN();
 }
