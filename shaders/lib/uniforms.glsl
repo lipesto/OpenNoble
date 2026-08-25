@@ -22,8 +22,14 @@ uniform  sampler2D colortex1;
 uniform  sampler2D colortex2;
 uniform usampler2D colortex3;
 
+//CUSTOM IMAGES
+uniform sampler2D luts_transmittance;
+uniform sampler2D luts_multiscattering;
+uniform sampler2D luts_view;
+
 
 
 uniform vec2 resolution;
 uniform vec2 resolutionInv;
 uniform vec3 cameraPositionFract;
+uniform vec3 sunDir;

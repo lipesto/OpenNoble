@@ -1,8 +1,10 @@
 #version 430
 
 #include "/lib/uniforms.glsl"
+#include "/lib/constants.glsl"
+#include "/lib/utils.glsl"
 
-/*  
+/*
 const int colortex0Format =     RGBA8;
 const int colortex1Format =     RGBA8;
 const int colortex2Format =     R11F_G11F_B10F;
@@ -14,6 +16,7 @@ const bool colortex2Clear =     false;
 const bool colortex3Clear =     false;
 
 const float voxelDistance = 48.0;
+const float sunPathRotation = -30.0;
 */
 
 #include "/lib/stolen_code/octa_enc.glsl"
@@ -25,11 +28,25 @@ const ivec3 voxelizedVolumeSize = ivec3(256, 128, 256);
 
 #include "/lib/ray_tracing.glsl"
 
+#include "/lib/stolen_code/ray.glsl"
+#include "/lib/stolen_code/noise.glsl"
+
+#include "/lib/sphere.glsl"
+#include "/lib/stolen_code/atmosphere.glsl"
 
 out vec3 color;
 void main() {
-
     float depth = texelFetch(depthtex0, ivec2(gl_FragCoord), 0).r;
+    if (depth == 1.0) {
+        vec3 dir = createRay(gl_FragCoord.xy * resolutionInv, gbufferProjectionInverse, gbufferModelViewInverse);
+        color = L_lutWithCelestials(dir);
+        color *= exp2(6);
+        color /= color + 1.0;
+        color = pow(color, vec3(1.0 / 2.0));
+        color += (1.0 / 255.0) * interleavedGradientNoise(gl_FragCoord.xy) - (0.5 / 255.0);
+        return;
+    }
+
     vec4 posScreen = vec4(gl_FragCoord.xy * resolutionInv, depth, 1) * 2.0 - 1.0;
     vec4 posView = gbufferProjectionInverse * posScreen;
     posView.xyz /= posView.w;
@@ -61,8 +78,8 @@ void main() {
         bool hit;
         ivec3 P = ray(O, D, hit);
 
-        vec4 voxelColor = hit ? texelFetch(voxelcolortex, ivec3(P), 0) : vec4(0.8, 0.9, 1.0, 0.1);
-        vec3 incomingLight = pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a;
+        vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(normalize(D));
         accumulatedDiffuse += incomingLight;
         }
 
@@ -71,12 +88,12 @@ void main() {
         vec3 D = reflect(normalize(position), normal) + offset * abs(offset) / sqrt(2.0) * roughness;
         bool hit;
         ivec3 P = ray(O, D, hit);
-        vec4 voxelColor = hit ? texelFetch(voxelcolortex, ivec3(P), 0) : vec4(0.8, 0.9, 1.0, 0.1);
-        vec3 incomingLight = pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a;
+        vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(normalize(D));
         accumulatedSpecular += incomingLight;
         }
     }
-    
+
     accumulatedDiffuse /= samples;
     accumulatedSpecular /= samples;
 
