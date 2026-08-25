@@ -1,1 +1,1 @@
-Can someone add a readme pls
+Most free and open source shaders under the sun (while being extremely noble). 
