@@ -19,6 +19,7 @@ const ivec3 voxelizedVolumeSize = ivec3(256, 128, 256);
 
 #include "/lib/stolen_code/ray.glsl"
 #include "/lib/stolen_code/noise.glsl"
+#include "/lib/random.glsl"
 
 #include "/lib/sphere.glsl"
 #include "/lib/stolen_code/atmosphere.glsl"
@@ -50,11 +51,12 @@ void main() {
     vec3 accumulatedDiffuse = vec3(0);
     vec3 accumulatedSpecular = vec3(0);
 
+    uint seed = hash67(vec3(fragCoord, frameCounter * 0));
+
     #define samples 16 // [1 16 64 128 256]
     for (int s = 0; s < samples; s++) {
-        vec4 rand = texelFetch(noisetex, ivec2((fragCoord + 0.5) + vec2(s * 10, s * 228)) & 255, 0);
         if (!isMetal) {
-        vec3 rayDir = cosineDirection(gdata.normal, rand.xy);
+        vec3 rayDir = cosineDirection(gdata.normal, vec2(rnd(seed), rnd(seed)));
 
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
@@ -65,7 +67,7 @@ void main() {
         }
 
         {
-        vec3 offset = rand.xyz * 2.0 - 1.0;
+        vec3 offset = vec3(rnd(seed), rnd(seed), rnd(seed)) * 2.0 - 1.0;
         vec3 rayDir = normalize(reflect(position, gdata.normal) + offset * abs(offset) / sqrt(2.0) * gdata.roughness);
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);

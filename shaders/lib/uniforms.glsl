@@ -35,3 +35,4 @@ uniform vec2 resolution;
 uniform vec2 resolutionInv;
 uniform vec3 cameraPositionFract;
 uniform vec3 sunDir;
+uniform int frameCounter;
