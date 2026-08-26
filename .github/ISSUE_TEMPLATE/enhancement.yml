@@ -1,0 +1,16 @@
+name: Enhancement
+description: Request a new feature or improvement.
+labels: ["enhancement"]
+body:
+    - type: markdown
+      attributes:
+          value: Thank you for helping the project improve! Make sure to try the latest version before submitting an issue, as it may have already been solved.
+
+    - type: textarea
+      id: description
+      attributes:
+          label: Description
+          description: Explain what you would like to see added. Feel free to provide images, links, etc. and other information you think may be useful.
+          placeholder: There should be full translations for Pirate Speak, LOLCAT and Danish.
+      validations:
+          required: true
