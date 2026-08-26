@@ -11,6 +11,6 @@ body:
       attributes:
           label: Description
           description: Explain what you would like to see added. Feel free to provide images, links, etc. and other information you think may be useful.
-          placeholder: There should be full translations for Pirate Speak, LOLCAT and Danish.
+          placeholder: There should be full translations for Pirate Speak, LOLCAT and WGSL.
       validations:
           required: true
