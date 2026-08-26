@@ -25,7 +25,7 @@ ivec3 ray(vec3 O, vec3 D, out bool hit) {
 
     hit = false;
     for (int i = 0; i<48; i++){
-        if (any(greaterThan(uvec3(P), uvec3(voxelizedVolumeSize)))) break;
+        if (any(greaterThanEqual(uvec3(P), uvec3(voxelizedVolumeSize)))) break;
 
         if ((stepMax.x< stepMax.y)&&(stepMax.x<stepMax.z)) {
             P.x += stepSign.x;
