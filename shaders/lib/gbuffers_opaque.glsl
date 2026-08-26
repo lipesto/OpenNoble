@@ -10,8 +10,8 @@ uniform float alphaTestRef;
 /* RENDERTARGETS: 0,1,2,3 */
 layout(location = 0) out vec4   albedoOut;      //rgba8
 layout(location = 1) out vec4   materialOut;    //rgba8
-layout(location = 2) out vec3   emissionOut;    //11_11_10f
-layout(location = 3) out uvec2  metadataOut;    //rg32ui
+layout(location = 2) out uvec2  metadataOut;    //rg32ui
+layout(location = 3) out vec3   emissionOut;    //11_11_10f
 
 void storeSurfaceData(vec3 albedo, vec3 normal, vec3 trueNormal, vec3 emission, vec3 material, vec2 lightmap, float ao) {
     albedoOut.rgb = albedo;

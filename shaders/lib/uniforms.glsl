@@ -19,8 +19,8 @@ uniform  sampler2D depthtex2;
 
 uniform  sampler2D colortex0;
 uniform  sampler2D colortex1;
-uniform  sampler2D colortex2;
-uniform usampler2D colortex3;
+uniform usampler2D colortex2;
+uniform  sampler2D colortex3;
 
 uniform  sampler2D colortex15;
 

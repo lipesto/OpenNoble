@@ -1,6 +1,6 @@
 #version 430
 
-#include "/lib/gbuffers_surface.glsl"
+#include "/lib/gbuffers_opaque.glsl"
 
 uniform vec4 entityColor;
 

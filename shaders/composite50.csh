@@ -6,7 +6,7 @@ layout (local_size_x = 16, local_size_y = 16) in;
 #include "/lib/constants.glsl"
 #include "/lib/utils.glsl"
 
-#include "/lib/stolen_code/octa_enc.glsl"
+#include "/lib/gbuffer_data.glsl"
 
 uniform sampler3D voxelcolortex;
 uniform usampler3D voxeloccupancytex;
@@ -40,20 +40,11 @@ void main() {
     }
 
     
+    gbufferData gdata = readGbufferData(colortex0, colortex1, colortex2, fragCoord);
+    vec3 emission = texelFetch(colortex3, fragCoord, 0).rgb;
+    bool isMetal = gdata.f0 > labPBRMetalThreshold;
 
-
-    vec3 albedo = pow(texelFetch(colortex0, fragCoord, 0).rgb, vec3(2.2));
-    vec3 material = texelFetch(colortex1, fragCoord, 0).rgb;
-    vec3 emission = texelFetch(colortex2, fragCoord, 0).rgb;
-    vec3 normal = octa_decode(unpackSnorm2x16(texelFetch(colortex3, fragCoord, 0).r));
-    vec3 trueNormal = octa_decode(unpackUnorm4x8(texelFetch(colortex3, fragCoord, 0).g).xy * 2.0 - 1.0);
-    float ao = texelFetch(colortex0, fragCoord, 0).a;
-    vec2 lightmap = unpackUnorm4x8(texelFetch(colortex3, fragCoord, 0).g).zw;
-    bool isMetal = material.y > 229.0 / 255.0;
-
-    float roughness = pow(1.0 - material.x, 2.0);
-
-    vec3 rayOrigin = position + cameraPositionFract + voxelizedVolumeSize/2 + trueNormal * 0.01 + gbufferModelViewInverse[3].xyz;
+    vec3 rayOrigin = position + cameraPositionFract + voxelizedVolumeSize/2 + gdata.trueNormal * 0.01 + gbufferModelViewInverse[3].xyz;
 
 
     vec3 accumulatedDiffuse = vec3(0);
@@ -63,23 +54,23 @@ void main() {
     for (int s = 0; s < samples; s++) {
         vec4 rand = texelFetch(noisetex, ivec2((fragCoord + 0.5) + vec2(s * 10, s * 228)) & 255, 0);
         if (!isMetal) {
-        vec3 rayDir = cosineDirection(normal, rand.xy);
+        vec3 rayDir = cosineDirection(gdata.normal, rand.xy);
 
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
 
         vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * lightmap.y;
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
         accumulatedDiffuse += incomingLight;
         }
 
         {
         vec3 offset = rand.xyz * 2.0 - 1.0;
-        vec3 rayDir = normalize(reflect(position, normal) + offset * abs(offset) / sqrt(2.0) * roughness);
+        vec3 rayDir = normalize(reflect(position, gdata.normal) + offset * abs(offset) / sqrt(2.0) * gdata.roughness);
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
         vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * lightmap.y;
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
         accumulatedSpecular += incomingLight;
         }
     }
@@ -87,10 +78,10 @@ void main() {
     accumulatedDiffuse /= samples;
     accumulatedSpecular /= samples;
 
-    float fresnel = fresnelSchlick(clamp(-dot(normal, normalize(position)), 0.0, 1.0), material.y);
+    float fresnel = fresnelSchlick(clamp(-dot(gdata.normal, normalize(position)), 0.0, 1.0), gdata.f0);
 
-    vec3 color = mix(albedo * accumulatedDiffuse, accumulatedSpecular, fresnel);
-    if (isMetal) color = accumulatedSpecular * albedo;
+    vec3 color = mix(gdata.albedo * accumulatedDiffuse, accumulatedSpecular, fresnel);
+    if (isMetal) color = accumulatedSpecular * gdata.albedo;
 
     color += emission;
 
