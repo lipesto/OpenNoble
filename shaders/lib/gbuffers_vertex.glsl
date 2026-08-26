@@ -13,5 +13,5 @@ vec2 getUV() {
 }
 
 vec2 getLightmap() {
-    return gl_MultiTexCoord1.xy / 256.0;
+    return (gl_MultiTexCoord1.xy - 8.0) / 232.0;
 }
