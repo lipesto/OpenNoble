@@ -39,8 +39,8 @@ ivec3 ray(vec3 O, vec3 D, out bool hit) {
             stepMax.z += stepDelta.z;
         }
         
-        uint o = texelFetch(voxeloccupancytex, ivec3(P), 0).r;
-        if (o == 1) {
+        uint o = texelFetch(voxeloccupancytex, ivec3(P.x, P.y >> 5, P.z), 0).r;
+        if ((o & (1u << uint(P.y & 31))) != 0u) {
             hit = true;
             break;
         }

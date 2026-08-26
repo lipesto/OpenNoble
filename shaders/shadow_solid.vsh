@@ -3,7 +3,7 @@
 const ivec3 voxelizedVolumeSize = ivec3(256, 128, 256);
 
 layout (rgba8) uniform image3D voxelcolorimg;
-layout (r8ui) uniform uimage3D voxeloccupancyimg;
+layout (r32ui) uniform uimage3D voxeloccupancyimg;
 layout (r32ui) uniform uimage3D voxeluvimg;
 
 
@@ -32,7 +32,7 @@ void main() {
 
 
         imageStore(voxelcolorimg, voxel, vec4(midColor, at_midBlock.w / 16.0));
-        imageStore(voxeloccupancyimg, voxel, uvec4(1));
+        imageAtomicOr(voxeloccupancyimg, ivec3(voxel.x, voxel.y >> 5, voxel.z), 1u << (voxel.y & 31));
         imageStore(voxeluvimg, voxel, uvec4(p.x | p.y << 14 | size << 28));
         return;
 }
