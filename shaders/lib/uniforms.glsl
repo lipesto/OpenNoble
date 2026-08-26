@@ -22,6 +22,8 @@ uniform  sampler2D colortex1;
 uniform  sampler2D colortex2;
 uniform usampler2D colortex3;
 
+uniform  sampler2D colortex15;
+
 //CUSTOM IMAGES
 uniform sampler2D luts_transmittance;
 uniform sampler2D luts_multiscattering;
