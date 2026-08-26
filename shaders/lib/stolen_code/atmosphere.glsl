@@ -228,29 +228,21 @@ vec3 L_scat(vec3 c, vec3 x, vec3 v, vec3 l_sun, vec3 l_moon) {
 }
 
 vec3 L_prime(vec3 x, vec3 v, vec3 l) {
-    SphereHit hit = raySphere(x, v, R_ATMOS);
-    hit.entry = max(hit.entry, 0.0);
+    const int STEPS = 16;
+    March m = setupMarch(x, v, STEPS);
 
-    float tMax = hit.exit;
-    SphereHit ground = raySphere(x, v, R_PLANET);
-    bool hitGround = ground.entry > 0.0 && ground.exit > ground.entry;
-    if (hitGround) tMax = ground.entry;
-
-    vec3 p = x + tMax * v;
+    vec3 p = x + m.max * v;
     vec3 T_path = T(x, p);
 
     vec3 L_o = vec3(0.0);
-    if (hitGround) {
+    if (m.hitGround) {
         vec3 up = normalize(p);
         L_o = GROUND_ALBEDO / PI * S(p, l) * max(0.0, dot(up, l));
     }
 
-    const int STEPS = 16;
-    float step = (tMax - hit.entry) / STEPS;
-
     vec3 sum = vec3(0.0);
     for (int i = 0; i < STEPS; i++) {
-        float t = hit.entry + step * (float(i) + 0.5);
+        float t = m.min + m.step * (float(i) + 0.5);
 
         vec3 x_s = x + t * v;
 
@@ -268,23 +260,16 @@ vec3 L_prime(vec3 x, vec3 v, vec3 l) {
         sum += T_t * L_l;
     }
 
-    return T_path * L_o + sum * step;
+    return T_path * L_o + sum * m.step;
 }
 
 vec3 L_f(vec3 x, vec3 v) {
-    SphereHit hit = raySphere(x, v, R_ATMOS);
-    hit.entry = max(hit.entry, 0.0);
-
-    float tMax = hit.exit;
-    SphereHit ground = raySphere(x, v, R_PLANET);
-    if (ground.entry > 0.0 && ground.exit > ground.entry) tMax = ground.entry;
-
     const int STEPS = 16;
-    float step = (tMax - hit.entry) / STEPS;
+    March m = setupMarch(x, v, STEPS);
 
     vec3 sum = vec3(0.0);
     for (int i = 0; i < STEPS; i++) {
-        float t = hit.entry + step * (float(i) + 0.5);
+        float t = m.min + m.step * (float(i) + 0.5);
 
         vec3 x_s = x + t * v;
 
@@ -295,9 +280,8 @@ vec3 L_f(vec3 x, vec3 v) {
         sum += T(x, x_s) * (s_r + s_m);
     }
 
-    return sum * step;
+    return sum * m.step;
 }
-
 
 vec3 L(vec3 v) {
     vec3 c = ATMOS_CAM_POS;
