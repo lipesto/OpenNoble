@@ -1,4 +1,4 @@
-#version 460
+#version 430
 
 #include "lib/uniforms.glsl"
 #include "lib/constants.glsl"

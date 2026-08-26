@@ -26,17 +26,20 @@ const ivec3 voxelizedVolumeSize = ivec3(256, 128, 256);
 void main() {
     ivec2 fragCoord = ivec2(gl_GlobalInvocationID);
     float depth = texelFetch(depthtex0, fragCoord, 0).r;
-    if (depth == 1.0) {
-        vec3 dir = createRay((fragCoord + 0.5) * resolutionInv, gbufferProjectionInverse, gbufferModelViewInverse);
-        vec3 color = L_lutWithCelestials(dir);
-        imageStore(colorimg15, fragCoord, vec4(color, 0));
-        return;
-    }
 
     vec4 posScreen = vec4((fragCoord + 0.5) * resolutionInv, depth, 1) * 2.0 - 1.0;
     vec4 posView = gbufferProjectionInverse * posScreen;
     posView.xyz /= posView.w;
     vec3 position = mat3(gbufferModelViewInverse) * posView.xyz;
+
+    if (depth == 1.0) {
+        vec3 dir = normalize(position);
+        vec3 color = L_lutWithCelestials(dir);
+        imageStore(colorimg15, fragCoord, vec4(color, 0));
+        return;
+    }
+
+    
 
 
     vec3 albedo = pow(texelFetch(colortex0, fragCoord, 0).rgb, vec3(2.2));
@@ -46,10 +49,11 @@ void main() {
     vec3 trueNormal = octa_decode(unpackUnorm4x8(texelFetch(colortex3, fragCoord, 0).g).xy * 2.0 - 1.0);
     float ao = texelFetch(colortex0, fragCoord, 0).a;
     vec2 lightmap = unpackUnorm4x8(texelFetch(colortex3, fragCoord, 0).g).zw;
+    bool isMetal = material.y > 229.0 / 255.0;
 
     float roughness = pow(1.0 - material.x, 2.0);
 
-    vec3 O = position + cameraPositionFract + voxelizedVolumeSize/2 + trueNormal * 0.01 + gbufferModelViewInverse[3].xyz;
+    vec3 rayOrigin = position + cameraPositionFract + voxelizedVolumeSize/2 + trueNormal * 0.01 + gbufferModelViewInverse[3].xyz;
 
 
     vec3 accumulatedDiffuse = vec3(0);
@@ -58,24 +62,24 @@ void main() {
     #define samples 16 // [1 16 64 128 256]
     for (int s = 0; s < samples; s++) {
         vec4 rand = texelFetch(noisetex, ivec2((fragCoord + 0.5) + vec2(s * 10, s * 228)) & 255, 0);
-        {
-        vec3 D = cosineDirection(normal, rand.xy);
+        if (!isMetal) {
+        vec3 rayDir = cosineDirection(normal, rand.xy);
 
         bool hit;
-        ivec3 P = ray(O, D, hit);
+        ivec3 P = ray(rayOrigin, rayDir, hit);
 
         vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(normalize(D));
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * lightmap.y;
         accumulatedDiffuse += incomingLight;
         }
 
         {
         vec3 offset = rand.xyz * 2.0 - 1.0;
-        vec3 D = reflect(normalize(position), normal) + offset * abs(offset) / sqrt(2.0) * roughness;
+        vec3 rayDir = normalize(reflect(position, normal) + offset * abs(offset) / sqrt(2.0) * roughness);
         bool hit;
-        ivec3 P = ray(O, D, hit);
+        ivec3 P = ray(rayOrigin, rayDir, hit);
         vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(normalize(D));
+        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * lightmap.y;
         accumulatedSpecular += incomingLight;
         }
     }
@@ -86,7 +90,7 @@ void main() {
     float fresnel = fresnelSchlick(clamp(-dot(normal, normalize(position)), 0.0, 1.0), material.y);
 
     vec3 color = mix(albedo * accumulatedDiffuse, accumulatedSpecular, fresnel);
-    if (material.y > 229.0 / 255.0) color = accumulatedSpecular * albedo;
+    if (isMetal) color = accumulatedSpecular * albedo;
 
     color += emission;
 
