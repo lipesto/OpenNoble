@@ -43,7 +43,7 @@ void main() {
     bool isMetal = gdata.f0 > labPBRMetalThreshold;
 
     vec3 rayOrigin = position + cameraPositionFract + voxelizedVolumeSize/2 + gdata.trueNormal * 0.01 + gbufferModelViewInverse[3].xyz;
-
+    vec3 viewDir = normalize(position);
 
     vec3 accumulatedDiffuse = vec3(0);
     vec3 accumulatedSpecular = vec3(0);
@@ -58,13 +58,14 @@ void main() {
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
         
+
         vec3 incomingLight = hit ? hitColor(rayOrigin, rayDir, P) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
         accumulatedDiffuse += incomingLight;
         }
 
         {
         vec3 offset = vec3(rnd(seed), rnd(seed), rnd(seed)) * 2.0 - 1.0;
-        vec3 rayDir = normalize(reflect(position, gdata.normal) + offset * abs(offset) / sqrt(2.0) * gdata.roughness);
+        vec3 rayDir = normalize(reflect(viewDir, gdata.normal) + offset * abs(offset) / sqrt(2.0) * gdata.roughness);
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
 
