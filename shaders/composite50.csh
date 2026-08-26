@@ -8,9 +8,6 @@ layout (local_size_x = 16, local_size_y = 16) in;
 
 #include "/lib/gbuffer_data.glsl"
 
-uniform sampler3D voxelcolortex;
-uniform usampler3D voxeloccupancytex;
-
 layout(rgba16f) uniform image2D colorimg15;
 
 const ivec3 voxelizedVolumeSize = ivec3(256, 128, 256);
@@ -60,9 +57,8 @@ void main() {
 
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
-
-        vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
+        
+        vec3 incomingLight = hit ? hitColor(rayOrigin, rayDir, P) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
         accumulatedDiffuse += incomingLight;
         }
 
@@ -71,8 +67,8 @@ void main() {
         vec3 rayDir = normalize(reflect(position, gdata.normal) + offset * abs(offset) / sqrt(2.0) * gdata.roughness);
         bool hit;
         ivec3 P = ray(rayOrigin, rayDir, hit);
-        vec4 voxelColor = texelFetch(voxelcolortex, ivec3(P), 0);
-        vec3 incomingLight = hit ? (pow(voxelColor.rgb, vec3(2.2)) * voxelColor.a) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
+
+        vec3 incomingLight = hit ? hitColor(rayOrigin, rayDir, P) : L_lutWithCelestials(rayDir) * gdata.lightmap.y;
         accumulatedSpecular += incomingLight;
         }
     }
